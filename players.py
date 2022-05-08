@@ -1,19 +1,21 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import bge
+
 if TYPE_CHECKING:
     from game_env import GameEnv
 
 
 class Player:
+    play_ob = ["Player1", "Player2"]
+    play_spawns = [[0, 0], [3, 3]]
+
     def __init__(self, n, game_env: GameEnv):
         self.game_env = game_env
-        play_ob = ["Player1", "Player2"]
         self.player_number = n
-        play_spawns = [[0, 0], [3, 3]]
-        self.game_object = game_env.sce.addObject(play_ob[self.player_number])
-        p_pos = play_spawns[n]
-        self.game_object.worldPosition = [*map(game_env.shift_position, p_pos), 1.0]
+        self.game_object = game_env.sce.addObject(self.play_ob[self.player_number])
+        self.game_object.worldPosition = [*map(game_env.shift_position, self.play_spawns[n]), 1.0]
         self.mov_speed = 2
 
     def update(self):
