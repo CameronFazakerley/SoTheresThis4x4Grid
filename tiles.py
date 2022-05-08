@@ -45,15 +45,16 @@ class Tile:
 
     def destabilize(self):
         self._is_fully_destabilized += 0.0003
-        self.game_object.worldOrientation = [pi + self._is_fully_destabilized * random() * 2,
-                                             self._is_fully_destabilized * random() * 2,
-                                             self._is_fully_destabilized * random() * 2]
+        self.game_object.worldOrientation = [pi + self._is_fully_destabilized * (random() - 0.5) * 2,
+                                             self._is_fully_destabilized * (random() - 0.5) * 2,
+                                             self._is_fully_destabilized * (random() - 0.5) * 2]
         if self.is_fully_destabilized:
             self.dying_tiles.remove(self)
         if 0.16 > self._is_fully_destabilized > 0.15:
             self.game_object.worldScale = [(0.16 - self._is_fully_destabilized) * 100 for _ in range(3)]
         elif self._is_fully_destabilized > 0.16:
-            self.game_object.worldPosition = [100, 100, 100]
+            self.game_object.worldPosition.z += 100
+            self.game_object.worldOrientation = [0, 0, 0]
 
     @property
     def is_fully_destabilized(self):
