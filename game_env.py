@@ -1,59 +1,40 @@
+from __future__ import annotations
+
 import bge
 
-no_of_players = 2
-sce = bge.logic.getCurrentScene()
-grid_size = 4
-tile_scale = 2
-gaps = 0.1
-pos_mult = tile_scale * (1 + gaps)
-offsetter = grid_size * pos_mult / 2 - pos_mult / 2
-mov_speed = 2
-
-
-class Player:
-    def __init__(self, n):
-        play_ob = ["Player1", "Player2"]
-        self.player_number = n
-        play_spawns = [[0, 0], [3, 3]]
-        self.game_object = sce.addObject(play_ob[self.player_number])
-        p_pos = play_spawns[n]
-        self.game_object.worldPosition = [p_pos[0] * pos_mult - offsetter, p_pos[1] * pos_mult - offsetter, 1.0]
-
-    def update(self):
-        kb = bge.logic.keyboard.activeInputs
-        keys = [[[45, 1, 1], [23, 0, -1], [41, 1, -1], [26, 0, 1]], [[72, 1, 1], [69, 0, -1], [70, 1, -1], [71, 0, 1]]]
-        keys = keys[self.player_number]
-        mov = [0.0, 0.0, self.game_object.worldLinearVelocity[2]]  # self.game_object.localLinearVelocity
-        for key, axis, mode in keys:
-            if key in kb:
-                mov[axis] += mov_speed * mode
-        floor_collision = self.game_object.sensors["FloorCollision"]
-        player_jump_key = [8, 53]
-        if len(floor_collision.hitObjectList) != 0:
-            if player_jump_key[self.player_number] in kb:
-                mov[2] += mov_speed
-        self.game_object.localLinearVelocity = mov
+from players import Player
 
 
 class GameEnv:
+    no_of_players = 2
+    sce = bge.logic.getCurrentScene()
+    grid_size = 4
+    tile_scale = 2
+    gaps = 0.1
+    pos_mult = tile_scale * (1 + gaps)
+    offsetter = grid_size * pos_mult / 2 - pos_mult / 2
+
     def __new__(cls, *args, **kwargs):
         if hasattr(bge.logic, "game_env"):
             bge.logic.game_env.update()
             return bge.logic.game_env
         self = super().__new__(cls)
-        self.players = [Player(n) for n in range(no_of_players)]
+        self.players = [Player(n, self) for n in range(cls.no_of_players)]
         obs = ["SolidBlackTile", "SolidWhiteTile"]
         self.dying_blocks = []
         self.killables = ["FadingFloorTile.000", "FadingFloorTile.001", "FadingFloorTile.002", "FadingFloorTile.003"]
 
-        self.map = [[None for _ in range(grid_size)] for _ in range(grid_size)]
+        self.map = [[None for _ in range(cls.grid_size)] for _ in range(cls.grid_size)]
 
-        for n in range(grid_size):
-            for i in range(grid_size):
+        for n in range(cls.grid_size):
+            for i in range(cls.grid_size):
                 col = (n % 2 + i) % 2
-                ob = sce.addObject(obs[col])
-                ob.worldPosition = [n * pos_mult - offsetter, i * pos_mult - offsetter, 0.0]
+                ob = cls.sce.addObject(obs[col])
+                ob.worldPosition = [n * cls.pos_mult - cls.offsetter, i * cls.pos_mult - cls.offsetter, 0.0]
         return bge.logic.__dict__.setdefault("game_env", self)
+
+    def shift_position(self, pos: float):
+        return pos * self.pos_mult - self.offsetter
 
     def update(self):
         for player in self.players:
@@ -61,8 +42,8 @@ class GameEnv:
 
     def tile_death(self, coords):
         self.map[coords[0]][coords[1]].endObject()
-        nu_block = sce.addObject(self.get_next_killable(True))
-        nu_block.worldPosition = [coords[0] * pos_mult - offsetter, coords[1] * pos_mult - offsetter, 0.0]
+        nu_block = self.sce.addObject(self.get_next_killable(True))
+        nu_block.worldPosition = [coords[0] * self.pos_mult - self.offsetter, coords[1] * self.pos_mult - self.offsetter, 0.0]
         self.map[coords[0]][coords[1]] = nu_block
 
     def get_next_killable(self, is_for_spawning):
