@@ -27,6 +27,8 @@ class Grid:
 
     def select_tile_to_kill(self) -> Tile:
         choose_from = tuple(t for t in self.map.values() if t not in Tile.dying_tiles)
+        for player in self.game_env.players:
+            player.game_object.worldPosition.z += 0.1
         if len(choose_from) > 1:
             return choice(choose_from)
 
