@@ -1,5 +1,5 @@
 from __future__ import annotations
-from random import choice
+from random import randint
 import bge
 
 from players import Player
@@ -41,12 +41,15 @@ class GameEnv:
     def update(self):
         for player in self.players:
             player.update()
-        co = choice(tile for row in self.grid for tile in row if tile)
-        self.tile_death(co)
+        ind = randint(len(self.existing_tiles))
+        x = ind % self.grid_size
+        y = ind // self.grid_size
+        self.tile_death([x, y])
 
     def tile_death(self, coords):
         self.grid[coords[0]][coords[1]].endObject()
-        nu_block = self.sce.addObject(self.get_next_killable(True))
+        nu_block = self.get_next_killable(True)
+        self.grid[coords[0]][coords[1]] = cls.sce.objects[nu_block]
         nu_block.worldPosition = [coords[0] * self.pos_mult - self.offsetter, coords[1] * self.pos_mult - self.offsetter, 0.0]
         self.grid[coords[0]][coords[1]] = nu_block
 
