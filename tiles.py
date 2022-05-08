@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import random
+from random import random, choice
+from math import pi
 from typing import TYPE_CHECKING
 
 
@@ -27,7 +28,7 @@ class Grid:
     def select_tile_to_kill(self) -> Tile:
         choose_from = tuple(t for t in self.map.values() if t not in Tile.dying_tiles)
         if len(choose_from) > 1:
-            return random.choice(choose_from)
+            return choice(choose_from)
 
 
 class Tile:
@@ -40,20 +41,20 @@ class Tile:
         self.game_object = game_env.sce.addObject(self.solid_tile_objects[sum(coords) % 2])
         self.game_object.worldPosition = [*map(game_env.shift_position, coords), 0.0]
         self.coords = tuple(coords)
-        self._is_fully_destabilized = False
+        self._is_fully_destabilized = 0.0
 
     def destabilize(self):
-        self._is_fully_destabilized += 1
+        self._is_fully_destabilized += 0.0003
+        self.game_object.worldOrientation = [pi + self._is_fully_destabilized * random() * 2,
+                                             self._is_fully_destabilized * random() * 2,
+                                             self._is_fully_destabilized * random() * 2]
         if self.is_fully_destabilized:
-            if self.game_object:
-                self.game_object.endObject()
-                self.game_object = None
-                self.dying_tiles.remove(self)
-        elif str(self.game_object) != self.dying_tile_object:
-            self.game_object.endObject()
-            self.game_object = self.game_env.sce.addObject(self.dying_tile_object)
-            self.game_object.worldPosition = [*map(self.game_env.shift_position, self.coords), 0.0]
+            self.dying_tiles.remove(self)
+        if 0.16 > self._is_fully_destabilized > 0.15:
+            self.game_object.worldScale = [(0.16 - self._is_fully_destabilized) * 100 for _ in range(3)]
+        elif self._is_fully_destabilized > 0.16:
+            self.game_object.worldPosition = [100, 100, 100]
 
     @property
     def is_fully_destabilized(self):
-        return self._is_fully_destabilized > 100
+        return self._is_fully_destabilized > 0.16
