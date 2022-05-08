@@ -19,7 +19,8 @@ class Player:
         self.game_object.worldPosition = [p_pos[0] * pos_mult - offsetter, p_pos[1] * pos_mult - offsetter, 1.0]
 
     def update(self):
-        pass
+        js = bge.logic.joysticks[self.player_number]
+        print(js.axisValues)
 
 
 class GameEnv:
