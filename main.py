@@ -36,6 +36,13 @@ class Player:
 
 
 class GameEnv:
+    def __new__(cls, *args, **kwargs):
+        if hasattr(bge.logic, "game_env"):
+            bge.logic.game_env.update()
+            return bge.logic.game_env
+        new = super().__new__(cls)
+        return bge.logic.__dict__.setdefault("game_env", new)
+
     def __init__(self):
         self.players = [Player(n) for n in range(no_of_players)]
         obs = ["SolidBlackTile", "SolidWhiteTile"]
@@ -68,7 +75,4 @@ class GameEnv:
         return name
 
 
-if hasattr(bge.logic, "GameEnv"):
-    bge.logic.GameEnv.update()
-else:
-    bge.logic.GameEnv = GameEnv()
+GameEnv()
