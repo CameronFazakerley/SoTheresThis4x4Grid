@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import bge
+
 if TYPE_CHECKING:
     from game_env import GameEnv
 

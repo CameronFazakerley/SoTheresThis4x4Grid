@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from random import choice
 import bge
 
 from players import Player
@@ -23,14 +23,16 @@ class GameEnv:
         obs = ["SolidBlackTile", "SolidWhiteTile"]
         self.dying_blocks = []
         self.killables = ["FadingFloorTile.000", "FadingFloorTile.001", "FadingFloorTile.002", "FadingFloorTile.003"]
+        self.existing_tiles = [n for n in range(cls.grid_size ** 2 - 1)]
 
-        self.map = [[None for _ in range(cls.grid_size)] for _ in range(cls.grid_size)]
+        self.grid = [[None for _ in range(cls.grid_size)] for _ in range(cls.grid_size)]
 
         for n in range(cls.grid_size):
             for i in range(cls.grid_size):
                 col = (n % 2 + i) % 2
                 ob = cls.sce.addObject(obs[col])
                 ob.worldPosition = [n * cls.pos_mult - cls.offsetter, i * cls.pos_mult - cls.offsetter, 0.0]
+                self.grid[n][i] = ob
         return bge.logic.__dict__.setdefault("game_env", self)
 
     def shift_position(self, pos: float):
@@ -39,12 +41,14 @@ class GameEnv:
     def update(self):
         for player in self.players:
             player.update()
+        co = choice(tile for row in self.grid for tile in row if tile)
+        self.tile_death(co)
 
     def tile_death(self, coords):
-        self.map[coords[0]][coords[1]].endObject()
+        self.grid[coords[0]][coords[1]].endObject()
         nu_block = self.sce.addObject(self.get_next_killable(True))
         nu_block.worldPosition = [coords[0] * self.pos_mult - self.offsetter, coords[1] * self.pos_mult - self.offsetter, 0.0]
-        self.map[coords[0]][coords[1]] = nu_block
+        self.grid[coords[0]][coords[1]] = nu_block
 
     def get_next_killable(self, is_for_spawning):
         name = self.killables[-1]
