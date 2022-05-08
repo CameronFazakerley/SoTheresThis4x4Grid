@@ -7,6 +7,7 @@ tile_scale = 2
 gaps = 0.1
 pos_mult = tile_scale * (1 + gaps)
 offsetter = grid_size * pos_mult / 2 - pos_mult / 2
+mov_speed = 2
 
 
 class Player:
@@ -19,8 +20,19 @@ class Player:
         self.game_object.worldPosition = [p_pos[0] * pos_mult - offsetter, p_pos[1] * pos_mult - offsetter, 1.0]
 
     def update(self):
-        js = bge.logic.joysticks[self.player_number]
-        print(js.axisValues)
+        kb = bge.logic.keyboard.activeInputs
+        keys = [[[45, 1, 1], [23, 0, -1], [41, 1, -1], [26, 0, 1]], [[72, 1, 1], [69, 0, -1], [70, 1, -1], [71, 0, 1]]]
+        keys = keys[self.player_number]
+        mov = [0.0, 0.0, self.game_object.worldLinearVelocity[2]]  # self.game_object.localLinearVelocity
+        for key, axis, mode in keys:
+            if key in kb:
+                mov[axis] += mov_speed * mode
+        floor_collision = self.game_object.sensors["FloorCollision"]
+        player_jump_key = [8, 53]
+        if len(floor_collision.hitObjectList) != 0:
+            if player_jump_key[self.player_number] in kb:
+                mov[2] += mov_speed
+        self.game_object.localLinearVelocity = mov
 
 
 class GameEnv:
@@ -28,10 +40,7 @@ class GameEnv:
         if hasattr(bge.logic, "game_env"):
             bge.logic.game_env.update()
             return bge.logic.game_env
-        new = super().__new__(cls)
-        return bge.logic.__dict__.setdefault("game_env", new)
-
-    def __init__(self):
+        self = super().__new__(cls)
         self.players = [Player(n) for n in range(no_of_players)]
         obs = ["SolidBlackTile", "SolidWhiteTile"]
         self.dying_blocks = []
@@ -44,6 +53,7 @@ class GameEnv:
                 col = (n % 2 + i) % 2
                 ob = sce.addObject(obs[col])
                 ob.worldPosition = [n * pos_mult - offsetter, i * pos_mult - offsetter, 0.0]
+        return bge.logic.__dict__.setdefault("game_env", self)
 
     def update(self):
         for player in self.players:
